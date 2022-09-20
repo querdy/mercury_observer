@@ -5,6 +5,7 @@ from bs4 import BeautifulSoup as BSoup
 from parser.login.base_session import BaseSession
 from parser import dto
 from settings import logger
+from parser.utils import date_str_to_datetime
 
 
 def _base_get(sess: BaseSession, enterprise_pk: str) -> (BaseSession, str):
@@ -87,6 +88,13 @@ def transaction_document_parser(
     transaction.waybillid = soup.find("input", {"name": "waybillId"}).get_attribute_list("value")[0]
     transaction.version = soup.find("input", {"name": "version"}).get_attribute_list("value")[0]
     transaction.tuid = soup.find("input", {"name": "tuid"}).get_attribute_list("value")[0]
+
+    vet_document = soup.find('a', class_='operation-link blue').get('href').split('&')[1].split('=')[-1]
+    page = sess.fetch(url, params={'_action': 'showVetDocumentAjaxForm',
+                                   'vetDocument': vet_document})
+    soup = BSoup(page.text, 'html5lib')
+    transaction.date_from = soup.find_all('td', class_='value')[8].getText()
+    transaction.date_to = soup.find_all('td', class_='value')[9].getText()
 
 
 def _upgrade_enterprise_data(soup: BSoup, transaction_data: dto.TransactionData):

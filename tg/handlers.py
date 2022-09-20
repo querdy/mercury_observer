@@ -4,37 +4,29 @@ import aioschedule
 from datetime import datetime
 
 from aiogram import Dispatcher, types
+from aiogram.dispatcher import FSMContext
 from aiogram.dispatcher.filters import Text
 
 from tg import buttons
+from tg.states import UserState
 from scheduler import scheduler
 from parser.start_parse import start_parse
 
 
 def register_handlers_requests(dispatcher: Dispatcher):
 
-    dispatcher.register_message_handler(get_requests,
-                                        Text(equals='Получить список активных заявок',
-                                             ignore_case=True)
-                                        )
+    dispatcher.register_message_handler(get_requests, Text(equals='Получить список активных заявок',
+                                                           ignore_case=True))
 
-    dispatcher.register_message_handler(create_schedule_task,
-                                        Text(equals='Запустить периодически',
-                                             ignore_case=True)
-                                        )
+    dispatcher.register_message_handler(create_schedule_task, Text(equals='Запустить периодически',
+                                                                   ignore_case=True))
 
-    dispatcher.register_message_handler(cancel_schedule_task,
-                                        Text(equals='Остановить',
-                                             ignore_case=True)
-                                        )
+    dispatcher.register_message_handler(cancel_schedule_task, Text(equals='Остановить',
+                                                                   ignore_case=True))
 
-    dispatcher.register_message_handler(help_response,
-                                        commands=["help"],
-                                        )
+    dispatcher.register_message_handler(help_response, commands=["help"],)
 
-    dispatcher.register_message_handler(start_response,
-                                        commands=["start"],
-                                        )
+    dispatcher.register_message_handler(start_response, commands=["start"],)
 
 
 async def get_requests(message: types.Message, is_schedule: bool = False):
@@ -71,7 +63,7 @@ async def get_requests(message: types.Message, is_schedule: bool = False):
                     f"{trailer_string}"\
                     f"{is_good(transaction_type.is_verified)} <b>Способ хранения при перевозке:</b> {transaction_type.value};\n"\
                     f"{is_good(product.is_verified)}<b>Продукт:</b> {product.value};\n"\
-                    f"{is_good(transaction.bill_of_lading_date.is_verified)}<b>Номер ТТН:</b> {transaction.bill_of_lading} от {transaction.bill_of_lading_date.value};\n"\
+                    f"{is_good(transaction.bill_of_lading_date.is_verified)}<b>Номер ТТН:</b> {transaction.bill_of_lading} от {transaction.bill_of_lading_date.value};\n\n"\
                     f"<b>{is_confirm}</b>"
                     # f"<b>Получатель:</b> {transaction.recipient_enterprise};\n"\
                     # f"<b>На площадку:</b> {transaction.recipient_company};\n"
@@ -93,7 +85,7 @@ async def create_schedule_task(message: types.Message):
         await scheduler.job_create(function=get_requests, params=[message, True])
         logger.info('Периодические таски запущены')
         await message.answer(text="Запустилось")
-        
+
         
 async def cancel_schedule_task(message: types.Message):
     user_tasks = scheduler.get_user_tasks(message.from_user.id)

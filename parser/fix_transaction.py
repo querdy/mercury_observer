@@ -73,7 +73,7 @@ def fix_transport_number(sess: BaseSession, enterprise: dto.EnterpriseData.enter
         return True
 
 
-def _find_correct_number(vehicle_number:str, vehicles_numbers: list = truck):
+def _find_correct_number(vehicle_number: str, vehicles_numbers: list = truck):
     vehicle_number = _vehicle_number_fix(vehicle_number)
     if vehicle_number:
         for number in vehicles_numbers:
@@ -83,6 +83,7 @@ def _find_correct_number(vehicle_number:str, vehicles_numbers: list = truck):
 
 
 def _vehicle_number_fix(vehicle_number: str):
+    vehicle_number = vehicle_number.replace(" ", "")
     veh_number = None
     if regex_car := re.search(r"(?<!\d)(\d{3})(?!\d)", vehicle_number):
         start = regex_car.start()

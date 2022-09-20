@@ -1,5 +1,6 @@
 from bs4 import BeautifulSoup
-from parser.login import users
+# from parser.login import users
+from parser.login.users import users
 from parser.login.base_session import BaseSession
 
 
@@ -42,8 +43,8 @@ def _login():
     page = my_sess.fetch(form['action'], data=form_data)
 
     # добавляем данные для авторизации
-    form_data['j_username'] = users.USER.login
-    form_data['j_password'] = users.USER.password
+    form_data['j_username'] = users['sasha'].login
+    form_data['j_password'] = users['sasha'].password
     form_data['_eventId_proceed'] = ''
     form_data['ksid'] = 'lolkek'
     # из текущей странницы нам нужна ссылка по которой отправить авторизационные данные

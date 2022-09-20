@@ -1,5 +1,6 @@
 from typing import List
 from bs4 import BeautifulSoup as BSoup
+from datetime import datetime
 import settings
 from settings import logger
 from parser.document_parser import request_document_parser
@@ -31,6 +32,7 @@ def _tr_execution(sess: BaseSession, enterprises: List[dto.EnterpriseData]):
                 is_correction = True
                 fix_transport_number(sess=sess, enterprise=enterprise.enterprise_pk, transaction=transaction)
             transaction_document_parser(sess, enterprise.enterprise_pk, transaction)
+            logger.info((transaction.date_from - datetime.now()).total_seconds())
             if transaction.is_valid():
                 _confirm_transaction(sess, enterprise.enterprise_pk, transaction)
             logger.info("Оформлено" if transaction.is_confirm else "Не оформлено")
@@ -39,29 +41,33 @@ def _tr_execution(sess: BaseSession, enterprises: List[dto.EnterpriseData]):
 def _confirm_transaction(sess: BaseSession,
                          enterprise: dto.EnterpriseData.enterprise_pk,
                          transaction: dto.TransactionData):
-    url = 'https://mercury.vetrf.ru/gve/operatorui'
-    confirm_tr_params = {
-        'waybillId': transaction.waybillid,
-        '_action': 'formTransaction',
-        'pageList': '1',
-        'transactionPk': transaction.tr_transaction_pk,
-        'request': 'false',
-        'input': '',
-        'waybill': '',
-        'vetDocument': '',
-        'version': transaction.version,
-        'cancelAction': 'listTransaction',
-        'skipCheck': 'true',
-        'templateWaybillSeries': '',
-        'templateWaybillNumber': '',
-        'templateWaybillDate': '',
-        'templateWaybillType': '',
-        'templateWaybillAbsent': '',
-        'forwardedMessage': '',
-        'tuid': transaction.tuid
-    }
-    page = sess.fetch(url, data=confirm_tr_params)
-    transaction.is_confirm = True
+    logger.info((transaction.date_from - datetime.now()).total_seconds())
+    if (transaction.date_from - datetime.now()).total_seconds() < 0:
+        url = 'https://mercury.vetrf.ru/gve/operatorui'
+        confirm_tr_params = {
+            'waybillId': transaction.waybillid,
+            '_action': 'formTransaction',
+            'pageList': '1',
+            'transactionPk': transaction.tr_transaction_pk,
+            'request': 'false',
+            'input': '',
+            'waybill': '',
+            'vetDocument': '',
+            'version': transaction.version,
+            'cancelAction': 'listTransaction',
+            'skipCheck': 'true',
+            'templateWaybillSeries': '',
+            'templateWaybillNumber': '',
+            'templateWaybillDate': '',
+            'templateWaybillType': '',
+            'templateWaybillAbsent': '',
+            'forwardedMessage': '',
+            'tuid': transaction.tuid
+        }
+        page = sess.fetch(url, data=confirm_tr_params)
+        transaction.is_confirm = True
+    else:
+        pass
 
 
 def _accept_transaction(sess: BaseSession, enterprise_pk: str, transaction: dto.TransactionData):

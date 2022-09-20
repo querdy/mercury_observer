@@ -3,6 +3,7 @@ from datetime import datetime, timedelta
 from dataclasses import dataclass, field
 from typing import List
 from settings import VERIFIED_PRODUCTS, VERIFIED_TRANSACTION_TYPE
+from parser.utils import date_str_to_datetime
 
 
 CAR_NUMBER_REGEX = r"(?i)^[АВЕКМНОРСТУХ] ?\d{3}(?<!000) ?[АВЕКМНОРСТУХ]{2} ?\d{2,3} ?[R][U][S]$"
@@ -50,6 +51,8 @@ class TransactionData:
     version: str = None
     tuid: str = None
     is_confirm: bool = False
+    _date_from: datetime = None
+    _date_to: datetime = None
     _bill_of_lading_date: BillOfLadingDateData = None
     _product: ProductNameData = None
     _transaction_type: TransctionTypeData = None
@@ -62,6 +65,26 @@ class TransactionData:
                 self._transaction_type.is_verified and
                 self._product.is_verified and
                 (self._trailer_number is None or self._trailer_number.is_verified))
+
+    def is_expiration(self):
+        expiration = (self._date_to - self._date_from).total_seconds()
+        return expiration == 129600
+
+    @property
+    def date_from(self):
+        return self._date_from
+
+    @date_from.setter
+    def date_from(self, value: str):
+        self._date_from = date_str_to_datetime(value)
+
+    @property
+    def date_to(self):
+        return self._date_to
+
+    @date_to.setter
+    def date_to(self, value: str):
+        self._date_to = date_str_to_datetime(value)
 
     @property
     def product(self):
