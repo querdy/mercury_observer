@@ -28,7 +28,7 @@ def _tr_execution(sess: BaseSession, enterprises: List[dto.EnterpriseData]):
     for enterprise in enterprises:
         for transaction in enterprise.transactions_data:
             _accept_transaction(sess, enterprise.enterprise_pk, transaction)
-            if not transaction.car_number.is_verified or not transaction.trailer_number.is_verified:
+            if not transaction.car_number.is_verified or (transaction.trailer_number is not None and not transaction.trailer_number.is_verified):
                 is_correction = True
                 fix_transport_number(sess=sess, enterprise=enterprise.enterprise_pk, transaction=transaction)
             transaction_document_parser(sess, enterprise.enterprise_pk, transaction)

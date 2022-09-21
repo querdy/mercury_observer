@@ -41,12 +41,12 @@ def fix_transport_number(sess: BaseSession, enterprise: dto.EnterpriseData.enter
     waybillFirm = soup.find("input", {"name": "waybillFirm"}).get_attribute_list('value')[0]
     waybillCommonHSNumber = soup.find("input", {"name": "waybillCommonHSNumber"}).get_attribute_list('value')[0]
 
-    car_number = _find_correct_number(transaction.car_number)
+    car_number = _find_correct_number(transaction.car_number.value)
     if not car_number:
         return False
-
-    trailer_number = _find_correct_number(transaction.trailer_number)
-    if not trailer_number:
+    if transaction.trailer_number:
+        trailer_number = _find_correct_number(transaction.trailer_number.value)
+    else:
         trailer_number = ' '
 
     confirm_params = {
@@ -74,6 +74,7 @@ def fix_transport_number(sess: BaseSession, enterprise: dto.EnterpriseData.enter
 
 
 def _find_correct_number(vehicle_number: str, vehicles_numbers: list = truck):
+    logger.info(vehicle_number)
     vehicle_number = _vehicle_number_fix(vehicle_number)
     if vehicle_number:
         for number in vehicles_numbers:
@@ -83,7 +84,6 @@ def _find_correct_number(vehicle_number: str, vehicles_numbers: list = truck):
 
 
 def _vehicle_number_fix(vehicle_number: str):
-    vehicle_number = vehicle_number.replace(" ", "")
     veh_number = None
     if regex_car := re.search(r"(?<!\d)(\d{3})(?!\d)", vehicle_number):
         start = regex_car.start()
