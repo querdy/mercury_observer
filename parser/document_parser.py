@@ -64,6 +64,12 @@ def request_document_parser(
         transaction_data = dto.TransactionData()
         transaction_data.rq_transaction_pk = transaction_pk
         _upgrade_enterprise_data(soup, transaction_data=transaction_data)
+        vet_document = soup.find('a', title="просмотр сведений").get('href').split('&')[1].split('=')[-1]
+        page = sess.fetch(url, params={'_action': 'showVetDocumentAjaxForm',
+                                       'vetDocument': vet_document})
+        soup = BSoup(page.text, 'html5lib')
+        transaction_data.date_from = soup.find_all('td', class_='value')[6].getText()
+        transaction_data.date_to = soup.find_all('td', class_='value')[7].getText()
         rq_transactions_data.append(transaction_data)
 
     return rq_transactions_data
@@ -89,12 +95,12 @@ def transaction_document_parser(
     transaction.version = soup.find("input", {"name": "version"}).get_attribute_list("value")[0]
     transaction.tuid = soup.find("input", {"name": "tuid"}).get_attribute_list("value")[0]
 
-    vet_document = soup.find('a', class_='operation-link blue').get('href').split('&')[1].split('=')[-1]
-    page = sess.fetch(url, params={'_action': 'showVetDocumentAjaxForm',
-                                   'vetDocument': vet_document})
-    soup = BSoup(page.text, 'html5lib')
-    transaction.date_from = soup.find_all('td', class_='value')[8].getText()
-    transaction.date_to = soup.find_all('td', class_='value')[9].getText()
+    # vet_document = soup.find('a', class_='operation-link blue').get('href').split('&')[1].split('=')[-1]
+    # page = sess.fetch(url, params={'_action': 'showVetDocumentAjaxForm',
+    #                                'vetDocument': vet_document})
+    # soup = BSoup(page.text, 'html5lib')
+    # transaction.date_from = soup.find_all('td', class_='value')[8].getText()
+    # transaction.date_to = soup.find_all('td', class_='value')[9].getText()
 
 
 def _upgrade_enterprise_data(soup: BSoup, transaction_data: dto.TransactionData):

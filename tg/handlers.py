@@ -12,6 +12,8 @@ from tg.states import UserState
 from scheduler import scheduler
 from parser.start_parse import start_parse
 
+NOTIFIED_TRANSACTION = []
+
 
 def register_handlers_requests(dispatcher: Dispatcher):
 
@@ -46,8 +48,13 @@ async def get_requests(message: types.Message, is_schedule: bool = False):
         for enterprise in enterprises:
             url = f"http://mercury.vetrf.ru/gve/{enterprise.href}"
             answer = f"{enterprise.enterprise_name} \n - <b>количество активных заявок: {enterprise.numbers_of_requests}</b>;\n "
+            pk = 1
             for transaction in enterprise.transactions_data:
-                pk = 1
+                if (transaction.date_from - datetime.now()).total_seconds() < 0:
+                    NOTIFIED_TRANSACTION.clear()
+                if transaction.rq_transaction_pk in NOTIFIED_TRANSACTION and is_schedule:
+                    continue
+                # pk = 1
                 car_num = transaction.car_number.value
                 if transaction.trailer_number:
                     trailer_num = transaction.trailer_number.value
@@ -63,17 +70,23 @@ async def get_requests(message: types.Message, is_schedule: bool = False):
                     f"{trailer_string}"\
                     f"{is_good(transaction_type.is_verified)} <b>Способ хранения при перевозке:</b> {transaction_type.value};\n"\
                     f"{is_good(product.is_verified)}<b>Продукт:</b> {product.value};\n"\
-                    f"{is_good(transaction.bill_of_lading_date.is_verified)}<b>Номер ТТН:</b> {transaction.bill_of_lading} от {transaction.bill_of_lading_date.value};\n\n"\
-                    f"<b>{is_confirm}</b>"
+                    f"{'🍚🐈🙍🏻‍♀️' if transaction.is_expiration() else '❌ '}Срок годности 36ч: {transaction.is_expiration()}\n"\
+                    f"{is_good(transaction.bill_of_lading_date.is_verified)}<b>Номер ТТН:</b> {transaction.bill_of_lading} от {transaction.bill_of_lading_date.value};\n"
+                if not transaction.is_confirm:
+                    answer += f"<b>Выработка:</b> {transaction.date_from}\n"
+                answer += f"<b>\n{is_confirm}\n</b>"
                     # f"<b>Получатель:</b> {transaction.recipient_enterprise};\n"\
                     # f"<b>На площадку:</b> {transaction.recipient_company};\n"
                 pk += 1
-            answer += f"\n <a href=\"{url}\">Открыть список заявок</a>; \n"
-            logger.info('Обнаружены заявки')
+                NOTIFIED_TRANSACTION.append(transaction.rq_transaction_pk)
             logger.debug(answer)
-            await message.answer(text=answer,
-                                 parse_mode=types.ParseMode.HTML
-                                 )
+            if "Заявка" not in answer:
+                answer = ""
+            if answer != "":
+                answer += f"\n <a href=\"{url}\">Открыть список заявок</a>; \n"
+                await message.answer(text=answer,
+                                     parse_mode=types.ParseMode.HTML
+                                     )
 
 
 async def create_schedule_task(message: types.Message):
