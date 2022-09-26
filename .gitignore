@@ -133,3 +133,4 @@ dmypy.json
 settings.py
 
 parser/login/users.py
+parser/login/users.json
