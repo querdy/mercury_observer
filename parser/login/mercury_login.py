@@ -1,6 +1,5 @@
 from bs4 import BeautifulSoup
 import json
-from parser.login import users
 from parser.utils import get_login_and_password
 from parser.login.base_session import BaseSession
 
