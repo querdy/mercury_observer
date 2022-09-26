@@ -1,6 +1,7 @@
 # coding: utf-8
 import json
 from requests import Session
+from settings import logger
 
 
 HEADERS = {
@@ -40,14 +41,6 @@ class BaseSession(Session):
         else:
             return self.post(url, data=data, *args, **kwargs)
 
-    # def read_cookies(self, file):
-    #     with open("parser/login/" + file, 'r') as f:
-    #         self.cookies.update(json.load(f))
-    #
-    # def save_cookies(self, file):
-    #     with open("parser/login/" + file, 'w') as f:
-    #         json.dump(self.cookies.get_dict(), f, indent=4)
-
     def read_user_cookies(self, file, user: str):
         with open("parser/login/" + file, "r") as f:
             self.cookies.update(json.load(f).get(user).get('cookies'))
@@ -58,9 +51,3 @@ class BaseSession(Session):
             users[user].update({'cookies': self.cookies.get_dict()})
         with open("parser/login/" + file, "w") as f:
             json.dump(users, f, indent=4)
-
-    @staticmethod
-    def get_login_and_password(user: str):
-        with open("parser/login/users.json", "r") as f:
-            user_data = json.load(f).get(user)
-            return user_data['login'], user_data['password']
