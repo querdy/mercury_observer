@@ -13,6 +13,10 @@ main_menu = ReplyKeyboardMarkup(one_time_keyboard=False,
 
 users_menu = ReplyKeyboardMarkup(one_time_keyboard=False, resize_keyboard=True)
 try:
+    open("parser/login/users.json", "x").close()
+except FileExistsError:
+    pass
+try:
     with open("parser/login/users.json", "r") as f:
         users = json.load(f).keys()
         for user in users:
