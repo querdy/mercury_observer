@@ -1,20 +1,21 @@
 from bs4 import BeautifulSoup
+import json
 from parser.login import users
-# from parser.login.users import users
+from parser.utils import get_login_and_password
 from parser.login.base_session import BaseSession
 
 
-def check_cookies(file):
+def check_cookies(file, user):
     """Проверка имеющихся куки и попытка логина, если они не действительны"""
 
     URL = 'https://mercury.vetrf.ru/gve/operatorui'
-    sess = BaseSession(file)
+    sess = BaseSession(cookies=file, user=user)
     page = sess.fetch(URL)
     if 'Добро пожаловать,' in page.text:
         return sess
     else:
-        _login()
-        sess = BaseSession(file)
+        _login(user)
+        sess = BaseSession(cookies=file, user=user)
         page = sess.fetch(URL)
         if 'Добро пожаловать,' in page.text:
             return sess
@@ -22,12 +23,12 @@ def check_cookies(file):
             return False 
 
 
-def _login():
+def _login(user):
 
     """логин в системе Меркурий и сохранение куки"""
 
     URL = 'http://mercury.vetrf.ru/gve'
-    my_sess = BaseSession()
+    my_sess = BaseSession(user=user)
 
     page = my_sess.fetch(URL)
     soup = BeautifulSoup(page.content, 'html5lib')
@@ -43,8 +44,10 @@ def _login():
     page = my_sess.fetch(form['action'], data=form_data)
 
     # добавляем данные для авторизации
-    form_data['j_username'] = users.USER.login
-    form_data['j_password'] = users.USER.password
+    login, password = get_login_and_password(user)
+
+    form_data['j_username'] = login
+    form_data['j_password'] = password
     form_data['_eventId_proceed'] = ''
     form_data['ksid'] = 'lolkek'
     # из текущей странницы нам нужна ссылка по которой отправить авторизационные данные
@@ -72,7 +75,7 @@ def _login():
     # и отправляем по ссылке (где ее спарсить!?!?! блэд) для подтверждения данных
     page = my_sess.fetch('https://mercury.vetrf.ru/gve/saml/SSO/alias/gve', data=form_data)
 
-    my_sess.save_cookies('cookies.json')
+    my_sess.save_user_cookies('users.json', user)
     print('LogIn -> Success')
 
     return my_sess

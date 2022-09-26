@@ -1,4 +1,5 @@
 from datetime import datetime
+import json
 
 
 def date_str_to_datetime(date):
@@ -9,3 +10,9 @@ def date_str_to_datetime(date):
         except ValueError:
             continue
     return None
+
+
+def get_login_and_password(user: str):
+    with open("parser/login/users.json", "r") as f:
+        user_data = json.load(f).get(user)
+        return user_data['login'], user_data['password']

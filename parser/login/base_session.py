@@ -24,13 +24,13 @@ HEADERS = {
 
 class BaseSession(Session):
 
-    def __init__(self, cookies=None):
+    def __init__(self, cookies=None, user=None):
         super().__init__()
         self.headers = HEADERS
 
         if cookies:
             if isinstance(cookies, str):
-                self.read_cookies(cookies)
+                self.read_user_cookies(cookies, user)
             elif isinstance(cookies, dict):
                 self.cookies.update(cookies)
 
@@ -40,10 +40,27 @@ class BaseSession(Session):
         else:
             return self.post(url, data=data, *args, **kwargs)
 
-    def read_cookies(self, file):
-        with open("parser/login/" + file, 'r') as f:
-            self.cookies.update(json.load(f))
+    # def read_cookies(self, file):
+    #     with open("parser/login/" + file, 'r') as f:
+    #         self.cookies.update(json.load(f))
+    #
+    # def save_cookies(self, file):
+    #     with open("parser/login/" + file, 'w') as f:
+    #         json.dump(self.cookies.get_dict(), f, indent=4)
 
-    def save_cookies(self, file):
-        with open("parser/login/" + file, 'w') as f:
-            json.dump(self.cookies.get_dict(), f, indent=4)
+    def read_user_cookies(self, file, user: str):
+        with open("parser/login/" + file, "r") as f:
+            self.cookies.update(json.load(f).get(user).get('cookies'))
+
+    def save_user_cookies(self, file, user: str):
+        with open("parser/login/" + file, "r") as f:
+            users = json.load(f)
+            users[user].update({'cookies': self.cookies.get_dict()})
+        with open("parser/login/" + file, "w") as f:
+            json.dump(users, f, indent=4)
+
+    @staticmethod
+    def get_login_and_password(user: str):
+        with open("parser/login/users.json", "r") as f:
+            user_data = json.load(f).get(user)
+            return user_data['login'], user_data['password']

@@ -1,19 +1,18 @@
 from aiogram.types import ReplyKeyboardMarkup, KeyboardButton
+import json
 
 
 '''--- main menu ---'''
 btnGetMilkFarm = KeyboardButton("Получить список активных заявок")
 btnGetMilkFarmPeriodic = KeyboardButton("Запустить периодически")
 btnGetMilkFarmPeriodicStop = KeyboardButton("Остановить")
-mainMenu = ReplyKeyboardMarkup(one_time_keyboard=False,
-                               resize_keyboard=True).add(btnGetMilkFarm,
-                                                         btnGetMilkFarmPeriodic,
-                                                         btnGetMilkFarmPeriodicStop)
+main_menu = ReplyKeyboardMarkup(one_time_keyboard=False,
+                                resize_keyboard=True).add(btnGetMilkFarm,
+                                                          btnGetMilkFarmPeriodic,
+                                                          btnGetMilkFarmPeriodicStop)
 
-mainMenu_1 = ReplyKeyboardMarkup(one_time_keyboard=False,
-                                 resize_keyboard=True).add(btnGetMilkFarm,
-                                                           btnGetMilkFarmPeriodic)
-
-mainMenu_2 = ReplyKeyboardMarkup(one_time_keyboard=False,
-                                 resize_keyboard=True).add(btnGetMilkFarm,
-                                                           btnGetMilkFarmPeriodicStop)
+users_menu = ReplyKeyboardMarkup(one_time_keyboard=False, resize_keyboard=True)
+with open("parser/login/users.json", "r") as f:
+    users = json.load(f).keys()
+    for user in users:
+        users_menu.insert(KeyboardButton(user))
