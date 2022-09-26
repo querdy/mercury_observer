@@ -1,5 +1,6 @@
 from typing import List
 from bs4 import BeautifulSoup as BSoup
+from datetime import datetime
 import settings
 from settings import logger
 from parser.document_parser import request_document_parser
@@ -10,9 +11,9 @@ from parser.fix_transaction import fix_transport_number
 from parser import dto
 
 
-def start_parse():
+def start_parse(name: str):
     url = 'https://mercury.vetrf.ru/gve/operatorui?_action=changeServicedEnterprise'
-    sess = check_cookies('cookies.json')
+    sess = check_cookies('users.json', name)
     page = sess.get(url)
     soup = BSoup(page.content, 'html5lib')
 
@@ -26,14 +27,21 @@ def start_parse():
 def _tr_execution(sess: BaseSession, enterprises: List[dto.EnterpriseData]):
     for enterprise in enterprises:
         for transaction in enterprise.transactions_data:
-            _accept_transaction(sess, enterprise.enterprise_pk, transaction)
-            if not transaction.car_number.is_verified or not transaction.trailer_number.is_verified:
-                is_correction = True
-                fix_transport_number(sess=sess, enterprise=enterprise.enterprise_pk, transaction=transaction)
-            transaction_document_parser(sess, enterprise.enterprise_pk, transaction)
-            if transaction.is_valid():
-                _confirm_transaction(sess, enterprise.enterprise_pk, transaction)
-            logger.info("Оформлено" if transaction.is_confirm else "Не оформлено")
+            logger.info(f"tr: {transaction.rq_transaction_pk} timedelta: {(transaction.date_from - datetime.now()).total_seconds()}")
+            if (transaction.date_from - datetime.now()).total_seconds() < 0:
+                logger.info(f"Срок годности 36ч: {transaction.is_expiration()}")
+                if transaction.is_expiration():
+                    _accept_transaction(sess, enterprise.enterprise_pk, transaction)
+                    if not transaction.car_number.is_verified or (transaction.trailer_number is not None and not transaction.trailer_number.is_verified):
+                        is_correction = True
+                        fix_transport_number(sess=sess, enterprise=enterprise.enterprise_pk, transaction=transaction)
+                    transaction_document_parser(sess, enterprise.enterprise_pk, transaction)
+                    logger.info((transaction.date_from - datetime.now()).total_seconds())
+                    if transaction.is_valid():
+                        _confirm_transaction(sess, enterprise.enterprise_pk, transaction)
+                    logger.info("Оформлено" if transaction.is_confirm else "Не оформлено")
+                else:
+                    logger.info("Не оформлено")
 
 
 def _confirm_transaction(sess: BaseSession,

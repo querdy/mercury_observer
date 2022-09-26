@@ -10,7 +10,7 @@ autos = ['К114АР159RUS', 'К154ВО159RUS', 'М272ЕН159RUS', 'Н841АС159R
          ]
 
 trailers = ['АО411059RUS', 'АР579559RUS', 'АС541159RUS', 'АТ484359RUS', 'АР551159RUS', 'АС683259RUS',
-            'АТ490059RUS', 'АС541259RUS', 'АС683159RUS',
+            'АТ490059RUS', 'АС541259RUS', 'АС683159RUS', 'АО724659RUS'
             ]
 
 truck = autos + trailers
@@ -41,12 +41,12 @@ def fix_transport_number(sess: BaseSession, enterprise: dto.EnterpriseData.enter
     waybillFirm = soup.find("input", {"name": "waybillFirm"}).get_attribute_list('value')[0]
     waybillCommonHSNumber = soup.find("input", {"name": "waybillCommonHSNumber"}).get_attribute_list('value')[0]
 
-    car_number = _find_correct_number(transaction.car_number)
+    car_number = _find_correct_number(transaction.car_number.value)
     if not car_number:
         return False
-
-    trailer_number = _find_correct_number(transaction.trailer_number)
-    if not trailer_number:
+    if transaction.trailer_number:
+        trailer_number = _find_correct_number(transaction.trailer_number.value)
+    else:
         trailer_number = ' '
 
     confirm_params = {
@@ -73,7 +73,8 @@ def fix_transport_number(sess: BaseSession, enterprise: dto.EnterpriseData.enter
         return True
 
 
-def _find_correct_number(vehicle_number:str, vehicles_numbers: list = truck):
+def _find_correct_number(vehicle_number: str, vehicles_numbers: list = truck):
+    logger.info(vehicle_number)
     vehicle_number = _vehicle_number_fix(vehicle_number)
     if vehicle_number:
         for number in vehicles_numbers:
