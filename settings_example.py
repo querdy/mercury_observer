@@ -3,15 +3,17 @@ from loguru import logger
 
 
 # main
-API_TOKEN_TG = 'your api token'
+API_TOKEN_TG = 'API TOKEN'
 
 EXECUTE = True
 
+users_file_path = "parser/login/users.json"
+
 ENTERPRISE_PATTERNS = (
-    'ООО "Русь", ЖК Российский', 'ООО "Русь", Осенцовская племенная ферма', 'ООО "Русь", ферма Лобаново', 'ИП ЧОГОВАДЗЕ КОБА СУЛИКОЕВИЧ',
+    'ООО "Русь", ЖК Российский', 'ООО "Русь", Осенцовская племенная ферма', 'ООО "Русь", ферма Лобаново',
 )
 
-VERIFIED_PRODUCTS = ["молоко сырое коровье", "минтай бг мороженый"]
+VERIFIED_PRODUCTS = ["молоко сырое коровье",]
 
 VERIFIED_TRANSACTION_TYPE = "охлажденные"
 
