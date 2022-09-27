@@ -1,25 +1,26 @@
+import settings
 from bs4 import BeautifulSoup
-import json
 from parser.utils import get_login_and_password
 from parser.login.base_session import BaseSession
+from tg.utils import save_user_data, get_users_data
 
 
-def check_cookies(file, user):
+def check_cookies(user_name: str):
     """Проверка имеющихся куки и попытка логина, если они не действительны"""
-
+    users = get_users_data()
+    user_cookies = users[user_name]['cookies']
     URL = 'https://mercury.vetrf.ru/gve/operatorui'
-    sess = BaseSession(cookies=file, user=user)
+    sess = BaseSession(cookies=user_cookies)
     page = sess.fetch(URL)
     if 'Добро пожаловать,' in page.text:
         return sess
     else:
-        _login(user)
-        sess = BaseSession(cookies=file, user=user)
+        sess = _login(user_name)
         page = sess.fetch(URL)
         if 'Добро пожаловать,' in page.text:
             return sess
         else:
-            return False 
+            return None
 
 
 def _login(user):
@@ -27,7 +28,7 @@ def _login(user):
     """логин в системе Меркурий и сохранение куки"""
 
     URL = 'http://mercury.vetrf.ru/gve'
-    my_sess = BaseSession(user=user)
+    my_sess = BaseSession(cookies={})
 
     page = my_sess.fetch(URL)
     soup = BeautifulSoup(page.content, 'html5lib')
@@ -67,14 +68,15 @@ def _login(user):
         form_data['SAMLResponse'] = temp_data['SAMLResponse']
         del form_data['SAMLRequest']
     except KeyError:
-        print('неудачная авторизация, проверить верность логина и пароля')
-        return 'неудачная авторизация, проверить верность логина и пароля'
+        settings.logger.info('неудачная авторизация, проверить верность логина и пароля')
+        return my_sess
         # sys.exit(0)
 
     # и отправляем по ссылке (где ее спарсить!?!?! блэд) для подтверждения данных
     page = my_sess.fetch('https://mercury.vetrf.ru/gve/saml/SSO/alias/gve', data=form_data)
 
-    my_sess.save_user_cookies('users.json', user)
-    print('LogIn -> Success')
+    cookies = my_sess.cookies.get_dict()
+    save_user_data(user=user, cookies=cookies)
+    settings.logger.info('LogIn -> Success')
 
     return my_sess

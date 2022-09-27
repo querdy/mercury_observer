@@ -11,12 +11,10 @@ from parser.fix_transaction import fix_transport_number
 from parser import dto
 
 
-def start_parse(name: str):
+def start_parse(sess) -> list:
     url = 'https://mercury.vetrf.ru/gve/operatorui?_action=changeServicedEnterprise'
-    sess = check_cookies('users.json', name)
     page = sess.get(url)
     soup = BSoup(page.content, 'html5lib')
-
     enterprises = _get_enterprises_data(soup)
     _validate_enterprises(sess=sess, enterprises=enterprises)
     if settings.EXECUTE:

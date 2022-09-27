@@ -1,6 +1,7 @@
 # coding: utf-8
 import json
 from requests import Session
+import settings
 from settings import logger
 
 
@@ -25,29 +26,13 @@ HEADERS = {
 
 class BaseSession(Session):
 
-    def __init__(self, cookies=None, user=None):
+    def __init__(self, cookies):
         super().__init__()
         self.headers = HEADERS
-
-        if cookies:
-            if isinstance(cookies, str):
-                self.read_user_cookies(cookies, user)
-            elif isinstance(cookies, dict):
-                self.cookies.update(cookies)
+        self.cookies.update(cookies)
 
     def fetch(self, url, data=None, *args, **kwargs):
         if data is None:
             return self.get(url, *args, **kwargs)
         else:
             return self.post(url, data=data, *args, **kwargs)
-
-    def read_user_cookies(self, file, user: str):
-        with open("parser/login/" + file, "r") as f:
-            self.cookies.update(json.load(f).get(user).get('cookies'))
-
-    def save_user_cookies(self, file, user: str):
-        with open("parser/login/" + file, "r") as f:
-            users = json.load(f)
-            users[user].update({'cookies': self.cookies.get_dict()})
-        with open("parser/login/" + file, "w") as f:
-            json.dump(users, f, indent=4)

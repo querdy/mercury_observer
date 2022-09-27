@@ -2,6 +2,7 @@ import json
 from datetime import datetime
 
 import settings
+from parser.login.mercury_login import check_cookies
 from settings import logger
 
 from aiogram import Dispatcher, types
@@ -13,6 +14,7 @@ from tg.decorators import ascii_only_message
 from tg.states import UserSingleState, UserPeriodicState, CreateUserState, DeleteUserState
 from scheduler import scheduler
 from parser.start_parse import start_parse
+from tg.utils import save_user_data, delete_user, get_users_data
 
 NOTIFIED_TRANSACTION = []
 
@@ -56,12 +58,14 @@ def register_handlers_requests(dispatcher: Dispatcher):
 
 async def get_name_for_periodic(message: types.Message):
     await UserPeriodicState.user_name.set()
-    await message.reply('Выберите пользователя', reply_markup=buttons.users_menu)
+    users_munu = buttons.get_menu_with_users()
+    await message.reply('Выберите пользователя', reply_markup=users_munu)
 
 
 async def get_name_for_single(message: types.Message):
     await UserSingleState.user_name.set()
-    await message.reply('Выберите пользователя', reply_markup=buttons.users_menu)
+    users_munu = buttons.get_menu_with_users()
+    await message.reply('Выберите пользователя', reply_markup=users_munu)
 
 
 async def start_periodic_parse(message: types.Message, state: FSMContext):
@@ -97,7 +101,11 @@ async def get_requests(message: types.Message, user_name: str, is_schedule: bool
     def is_good(dataclass_is_verified):
         return '🍚🐈🙍🏻‍♀️' if dataclass_is_verified else '❌'
 
-    enterprises = start_parse(user_name)
+    sess = check_cookies(user_name=user_name)
+    if sess is None:
+        await message.answer(text="Не удалось залогиниться")
+        return
+    enterprises = start_parse(sess)
     if not enterprises:
         if not is_schedule:
             await message.answer(text="Заявки отсутствуют")
@@ -174,53 +182,38 @@ async def load_password(message: types.Message, state: FSMContext):
 async def load_name(message: types.Message, state: FSMContext):
     await state.update_data(name=message.text)
     data = await state.get_data()
-    try:
-        open(settings.users_file_path, "x").close()
-    except FileExistsError:
-        pass
-    with open(settings.users_file_path, "r") as f:
-        try:
-            users = json.load(f)
-        except json.decoder.JSONDecodeError:
-            users = dict()
-        users.update({data.get('name'): {"login": data.get('login'), "password": data.get('password'), "cookies": {}}})
-    with open("parser/login/users.json", "w") as f:
-        json.dump(users, f, indent=4)
+    if save_user_data(data.get('name'), **{"login": data.get('login'), "password": data.get('password'), "cookies": {}}):
         await message.reply(f"Пользователь {data.get('name')} добавлен", reply_markup=buttons.main_menu)
+    else:
+        await message.reply("Не удалось добавить пользователя")
     await state.finish()
 
 
 async def delete_user_start(message: types.Message):
     await DeleteUserState.user_name.set()
-    await message.reply('Выберите пользователя', reply_markup=buttons.users_menu)
+    users_munu = buttons.get_menu_with_users()
+    await message.reply('Выберите пользователя', reply_markup=users_munu)
 
 
 async def delete_user_confirm(message: types.Message, state: FSMContext):
-    await state.update_data(name=message.text)
-    await DeleteUserState.confirm.set()
-    await message.reply(f"Точно удалить пользователя {message.text}?", reply_markup=buttons.confirm_menu)
+    if message.text in get_users_data():
+        await state.update_data(name=message.text)
+        await DeleteUserState.confirm.set()
+        await message.reply(f"Точно удалить пользователя {message.text}?", reply_markup=buttons.confirm_menu)
+    else:
+        users_munu = buttons.get_menu_with_users()
+        await message.reply(f"Такого пользователя не существует. Введите существующего пользователя", reply_markup=users_munu)
 
 
 async def delete_user_finish(message: types.Message, state: FSMContext):
     await state.update_data(confirm=message.text)
     data = await state.get_data()
     if data.get("confirm").lower() == "да" or data.get("confirm").lower() == "yes":
-        try:
-            with open(settings.users_file_path, "r") as f:
-                users = json.load(f)
-                try:
-                    users.pop(data.get("name"))
-                except KeyError:
-                    await message.reply("Имя отсутствует в списке")
-                    return
-            with open(settings.users_file_path, "w") as f:
-                json.dump(users, f, indent=4)
-        except json.decoder.JSONDecodeError:
-            await message.answer("Нет зарегистрированных пользователей", reply_markup=buttons.main_menu)
-            await state.finish()
-            return
-        logger.info(f"{data.get('name')} удален(а)")
-        await message.reply(f"{data.get('name')} удален(а)", reply_markup=buttons.main_menu)
+        if delete_user(data.get("name")):
+            logger.info(f"{data.get('name')} удален(а)")
+            await message.reply(f"{data.get('name')} удален(а)", reply_markup=buttons.main_menu)
+        else:
+            await message.reply(f"Не удалось удалить пользователя: {data.get('name')}")
         await state.finish()
     elif data.get("confirm").lower() == "нет" or data.get("confirm").lower() == "no":
         await state.finish()
