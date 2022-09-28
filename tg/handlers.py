@@ -194,7 +194,7 @@ async def delete_user_start(message: types.Message):
     users_munu = buttons.get_menu_with_users()
     await message.reply('Выберите пользователя', reply_markup=users_munu)
 
-
+@ascii_only_message
 async def delete_user_confirm(message: types.Message, state: FSMContext):
     if message.text in get_users_data():
         await state.update_data(name=message.text)

@@ -6,7 +6,6 @@ from settings import logger
 from parser.document_parser import request_document_parser
 from parser.document_parser import transaction_document_parser
 from parser.login.base_session import BaseSession
-from parser.login.mercury_login import check_cookies
 from parser.fix_transaction import fix_transport_number
 from parser import dto
 

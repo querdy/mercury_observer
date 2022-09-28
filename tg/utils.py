@@ -24,20 +24,19 @@ def save_user_data(user: str, **data) -> bool:
         users[user].update(**data)
     except KeyError:
         users.update({user: data})
-    try:
-        with open(settings.USERS_FILE_PATH, "w") as f:
-            json.dump(users, f, indent=4)
-    except json.decoder.JSONDecodeError:
-        logger.error("Не удалось сохранить данные в файл")
-        return False
-    return True
+    return write_file(users)
 
 def delete_user(user: str) -> bool:
     users = get_users_data()
     if users.pop(user):
-        try:
-            with open(settings.USERS_FILE_PATH, "w") as f:
-                json.dump(users, f, indent=4)
-        except json.decoder.JSONDecodeError:
-            return False
+        return write_file(users)
+    return True
+
+def write_file(users):
+    try:
+        with open(settings.USERS_FILE_PATH, "w") as f:
+            json.dump(users, f, indent=4)
+    except json.decoder.JSONDecodeError:
+        logger.error("Не удалось записать в файл")
+        return False
     return True
