@@ -112,9 +112,9 @@ def _get_enterprises_data(soup) -> List[dto.EnterpriseData]:
     all_tr_requests = _get_all_tr_requests(soup)
     for tr_request in all_tr_requests:
         enterprise_data = dto.EnterpriseData()
-        enterprise_tag = tr_request.find_previous("td")
+        enterprise_tag = tr_request.find_previous("label")
 
-        enterprise_data.enterprise_pk = enterprise_tag.find_parent("tr").find("td").find("input").get("value")
+        enterprise_data.enterprise_pk = enterprise_tag.find("input").get("value")
         if len(enterprise_tag.find_all("a")) == 2:
             enterprise_tag.a.decompose()  # если есть входящие всд, убрать тег с ними из дерева bs
         enterprise_data.href = enterprise_tag.find("a").get("href")
