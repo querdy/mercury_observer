@@ -10,7 +10,7 @@ def get_user_tasks(user_id: int):
 
 async def job_create(function, params=None):
     params = params or []
-    aioschedule.every(10).seconds.do(function, *params)
+    aioschedule.every(5).minutes.do(function, *params)
 
 
 async def run_scheduler(*args, **kwargs):
