@@ -6,17 +6,14 @@ from settings import logger
 from parser.document_parser import request_document_parser
 from parser.document_parser import transaction_document_parser
 from parser.login.base_session import BaseSession
-from parser.login.mercury_login import check_cookies
 from parser.fix_transaction import fix_transport_number
 from parser import dto
 
 
-def start_parse(name: str):
+def start_parse(sess) -> list:
     url = 'https://mercury.vetrf.ru/gve/operatorui?_action=changeServicedEnterprise'
-    sess = check_cookies('users.json', name)
     page = sess.get(url)
     soup = BSoup(page.content, 'html5lib')
-
     enterprises = _get_enterprises_data(soup)
     _validate_enterprises(sess=sess, enterprises=enterprises)
     if settings.EXECUTE:
@@ -88,7 +85,7 @@ def _accept_transaction(sess: BaseSession, enterprise_pk: str, transaction: dto.
                                    }
                       )
 
-    soup = BSoup(page.text, 'html5lib')
+    # soup = BSoup(page.text, 'html5lib')
 
     tr_params = {'_action': 'showTransactionForm',
                  'transactionPk': transaction.rq_transaction_pk,
@@ -96,13 +93,14 @@ def _accept_transaction(sess: BaseSession, enterprise_pk: str, transaction: dto.
                  'cancelAction': 'listTransaction',
                  'anchor': '',
                  }
-    sess.fetch(url, params=tr_params)
-
+    page = sess.fetch(url, params=tr_params)
+    soup = BSoup(page.content, 'html5lib')
+    version = soup.find("input", {"name": "version"}).get_attribute_list('value')[-1]
     accept_params = {'_action': 'transactionAcceptForm',
                      'pageList': '1',
                      'transactionPk': transaction.rq_transaction_pk,
                      'request': 'true',
-                     'version': '3',
+                     'version': version,
                      'skipCheck': 'true',
                      }
     page = sess.fetch(url, params=accept_params)
@@ -115,9 +113,9 @@ def _get_enterprises_data(soup) -> List[dto.EnterpriseData]:
     all_tr_requests = _get_all_tr_requests(soup)
     for tr_request in all_tr_requests:
         enterprise_data = dto.EnterpriseData()
-        enterprise_tag = tr_request.find_previous("td")
+        enterprise_tag = tr_request.find_previous("label")
 
-        enterprise_data.enterprise_pk = enterprise_tag.find_parent("tr").find("td").find("input").get("value")
+        enterprise_data.enterprise_pk = enterprise_tag.find("input").get("value")
         if len(enterprise_tag.find_all("a")) == 2:
             enterprise_tag.a.decompose()  # если есть входящие всд, убрать тег с ними из дерева bs
         enterprise_data.href = enterprise_tag.find("a").get("href")

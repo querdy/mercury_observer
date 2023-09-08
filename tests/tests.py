@@ -1,4 +1,5 @@
 from parser.fix_transaction import _vehicle_number_fix
+from parser.dto import TransactionData
 
 
 def test_car_vehicle_number_fix():
@@ -14,3 +15,9 @@ def test_trailer_vehicle_number_fix():
     assert _vehicle_number_fix("ам1234") == "ам1234"
     assert _vehicle_number_fix("ам123499") == "ам1234"
     assert _vehicle_number_fix("м123499") is None
+
+def test_car_number():
+    tr = TransactionData()
+    tr.car_number = 'О538МТ159/АУ935959/—'
+    assert tr.car_number.is_verified == True
+

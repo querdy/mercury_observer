@@ -1,5 +1,6 @@
 import asyncio
 import aioschedule
+import settings
 
 
 def get_user_tasks(user_id: int):
@@ -10,7 +11,7 @@ def get_user_tasks(user_id: int):
 
 async def job_create(function, params=None):
     params = params or []
-    aioschedule.every(10).seconds.do(function, *params)
+    aioschedule.every(settings.SCHEDULE_EVERY_TIME).minutes.do(function, *params)
 
 
 async def run_scheduler(*args, **kwargs):

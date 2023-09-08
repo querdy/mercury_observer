@@ -1,22 +1,14 @@
 import re
 from bs4 import BeautifulSoup as BSoup
+
+import settings
 from settings import logger
 from parser import dto
 from parser.login.base_session import BaseSession
 
-autos = ['К114АР159RUS', 'К154ВО159RUS', 'М272ЕН159RUS', 'Н841АС159RUS', 'А833УЕ159RUS', 'А259ТТ159RUS',
-         'М259ОУ159RUS', 'М915РР159RUS', 'Е251МН159RUS', 'Т002РМ159RUS', 'М240ОУ159RUS', 'М283ЕН159RUS',
-         'А475НО159RUS', 'А260ТТ159RUS', 'К444ВВ159RUS',
-         ]
 
-trailers = ['АО411059RUS', 'АР579559RUS', 'АС541159RUS', 'АТ484359RUS', 'АР551159RUS', 'АС683259RUS',
-            'АТ490059RUS', 'АС541259RUS', 'АС683159RUS', 'АО724659RUS'
-            ]
-
-truck = autos + trailers
-
-
-def fix_transport_number(sess: BaseSession, enterprise: dto.EnterpriseData.enterprise_pk, transaction: dto.TransactionData):
+def fix_transport_number(sess: BaseSession, enterprise: dto.EnterpriseData.enterprise_pk,
+                         transaction: dto.TransactionData):
     url = 'https://mercury.vetrf.ru/gve/operatorui'
     sess.fetch(url, params={'enterprisePk': enterprise,
                             '_action': 'chooseServicedEnterprise'
@@ -55,6 +47,7 @@ def fix_transport_number(sess: BaseSession, enterprise: dto.EnterpriseData.enter
         'waybillFirm': waybillFirm,
         'waybillCommonHSNumber': waybillCommonHSNumber,
         'transportType': '1',
+        'transportRegistrationCountry.guid': '74a3cbb1-56fa-94f3-ab3f-e8db4940d96b',
         'transportAuto': car_number,
         'trailer': trailer_number,
         'storageType': 2,
@@ -73,14 +66,16 @@ def fix_transport_number(sess: BaseSession, enterprise: dto.EnterpriseData.enter
         return True
 
 
-def _find_correct_number(vehicle_number: str, vehicles_numbers: list = truck):
+def _find_correct_number(vehicle_number: str, vehicles_numbers: list = settings.TRUCK):
     logger.info(vehicle_number)
     vehicle_number = _vehicle_number_fix(vehicle_number)
     if vehicle_number:
         for number in vehicles_numbers:
             if vehicle_number.upper() in number.upper():
+                logger.info(f"-> {number}")
                 return number
-    return False
+    logger.info(f"-> {vehicle_number}")
+    return vehicle_number
 
 
 def _vehicle_number_fix(vehicle_number: str):

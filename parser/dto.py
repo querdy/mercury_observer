@@ -2,12 +2,16 @@ import re
 from datetime import datetime, timedelta
 from dataclasses import dataclass, field
 from typing import List
+
+import settings
 from settings import VERIFIED_PRODUCTS, VERIFIED_TRANSACTION_TYPE
 from parser.utils import date_str_to_datetime
 
 
-CAR_NUMBER_REGEX = r"(?i)^[АВЕКМНОРСТУХ] ?\d{3}(?<!000) ?[АВЕКМНОРСТУХ]{2} ?\d{2,3} ?[R][U][S]$"
+# CAR_NUMBER_REGEX = r"(?i)^[АВЕКМНОРСТУХ] ?\d{3}(?<!000) ?[АВЕКМНОРСТУХ]{2} ?\d{2,3} ?[R][U][S]$"
 TRAILERS_NUMBER_REGEX = r"(?i)^[АВЕКМНОРСТУХ]{2} ?\d{4}(?<!0000) ?\d{2} ?[R][U][S]$"
+CAR_NUMBER_REGEX = r"(?i)^[АВЕКМНОРСТУХ] ?\d{3}(?<!000) ?[АВЕКМНОРСТУХ]{2} ?\d{2,3}$"
+# TRAILERS_NUMBER_REGEX = r"(?i)^[АВЕКМНОРСТУХ]{2} ?\d{4}(?<!0000) ?\d{2}$"
 
 
 @dataclass(frozen=True)
@@ -135,14 +139,15 @@ class TransactionData:
     @car_number.setter
     def car_number(self, value):
         numbers = [number.strip() for number in value.split("/")]
+        print(numbers)
 
-        if re.search(CAR_NUMBER_REGEX, numbers[0]):
+        if re.search(CAR_NUMBER_REGEX, numbers[0]) and numbers[0] in settings.AUTOS:
             self._car_number = TransportNumberData(value=numbers[0], is_verified=True)
         else:
             self._car_number = TransportNumberData(value=numbers[0], is_verified=False)
         
         if len(numbers) > 1:
-            if re.search(TRAILERS_NUMBER_REGEX, numbers[1]):
+            if re.search(TRAILERS_NUMBER_REGEX, numbers[1]) and numbers[1] in settings.TRAILERS:
                 self._trailer_number = TransportNumberData(value=numbers[1], is_verified=True)
             else:
                 self._trailer_number = TransportNumberData(value=numbers[1], is_verified=False)

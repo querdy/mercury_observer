@@ -35,11 +35,12 @@ def request_document_parser(
         },
     )
 
-    soup = BSoup(page.text, "html5lib")
-
+    soup = BSoup(page.text, "lxml")
+    html_content = soup.body.htmldata.listcontent
+    table_transactions = html_content.find("table", class_="emplist")
     transactions_pk = [
-        request.find_previous_sibling().getText()
-        for request in soup.find_all("a", title="просмотр сведений")
+        request.find_all("td")[0].find("b").getText()
+        for request in table_transactions.find_all("tr")[1:]
     ]
     if not transactions_pk:
         logger.info(

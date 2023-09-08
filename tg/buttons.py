@@ -1,25 +1,27 @@
 from aiogram.types import ReplyKeyboardMarkup, KeyboardButton
-import json
+from tg import utils
 
 
 '''--- main menu ---'''
-btnGetMilkFarm = KeyboardButton("Получить список активных заявок")
-btnGetMilkFarmPeriodic = KeyboardButton("Запустить периодически")
-btnGetMilkFarmPeriodicStop = KeyboardButton("Остановить")
-main_menu = ReplyKeyboardMarkup(one_time_keyboard=False,
-                                resize_keyboard=True).add(btnGetMilkFarm,
-                                                          btnGetMilkFarmPeriodic,
-                                                          btnGetMilkFarmPeriodicStop)
+main_menu = ReplyKeyboardMarkup(one_time_keyboard=False, resize_keyboard=True)
+main_menu.insert(KeyboardButton("Получить список активных заявок"))
+main_menu.insert(KeyboardButton("Запустить периодически"))
+main_menu.insert(KeyboardButton("Остановить"))
 
-users_menu = ReplyKeyboardMarkup(one_time_keyboard=False, resize_keyboard=True)
-try:
-    open("parser/login/users.json", "x").close()
-except FileExistsError:
-    pass
-try:
-    with open("parser/login/users.json", "r") as f:
-        users = json.load(f).keys()
-        for user in users:
-            users_menu.insert(KeyboardButton(user))
-except json.decoder.JSONDecodeError:
-    pass
+'''--- users menu ---'''
+def get_menu_with_users() -> ReplyKeyboardMarkup:
+    users = utils.get_users_data()
+    users_menu = ReplyKeyboardMarkup(one_time_keyboard=False, resize_keyboard=True)
+    [users_menu.insert(KeyboardButton(user)) for user in users]
+    users_menu.insert(KeyboardButton("Отмена"))
+    return users_menu
+
+
+'''--- cancel menu ---'''
+cancel_menu = ReplyKeyboardMarkup(one_time_keyboard=False, resize_keyboard=True)
+cancel_menu.insert("Отмена")
+
+'''--- confirm menu ---'''
+confirm_menu = ReplyKeyboardMarkup(one_time_keyboard=False, resize_keyboard=True)
+confirm_menu.insert("Да")
+confirm_menu.insert("Нет")

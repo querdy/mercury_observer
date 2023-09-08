@@ -16,4 +16,5 @@ class CreateUserState(StatesGroup):
 
 
 class DeleteUserState(StatesGroup):
-    name = State()
+    user_name = State()
+    confirm = State()
