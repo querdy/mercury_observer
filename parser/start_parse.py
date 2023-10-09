@@ -29,20 +29,23 @@ def _tr_execution(sess: BaseSession, enterprises: List[dto.EnterpriseData]):
                 logger.info(f"Срок годности 36ч: {transaction.is_expiration()}")
                 if transaction.is_expiration():
                     _accept_transaction(sess, enterprise.enterprise_pk, transaction)
-                    if not transaction.car_number.is_verified or (transaction.trailer_number is not None and not transaction.trailer_number.is_verified):
-                        is_correction = True
-                        fix_transport_number(sess=sess, enterprise=enterprise.enterprise_pk, transaction=transaction)
+                    # if not transaction.car_number.is_verified or (
+                    #         transaction.trailer_number is not None and not transaction.trailer_number.is_verified):
+                    #     is_correction = True
+                    #     fix_transport_number(sess=sess, enterprise=enterprise.enterprise_pk, transaction=transaction)
                     transaction_document_parser(sess, enterprise.enterprise_pk, transaction)
                     logger.info((transaction.date_from - datetime.now()).total_seconds())
                     if transaction.is_valid():
-                        _confirm_transaction(sess, enterprise.enterprise_pk, transaction)
+                        _confirm_transaction(sess,
+                                             # enterprise.enterprise_pk,
+                                             transaction)
                     logger.info("Оформлено" if transaction.is_confirm else "Не оформлено")
                 else:
                     logger.info("Не оформлено")
 
 
 def _confirm_transaction(sess: BaseSession,
-                         enterprise: dto.EnterpriseData.enterprise_pk,
+                         # enterprise: dto.EnterpriseData.enterprise_pk,
                          transaction: dto.TransactionData):
     url = 'https://mercury.vetrf.ru/gve/operatorui'
     confirm_tr_params = {

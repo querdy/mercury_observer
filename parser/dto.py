@@ -140,14 +140,15 @@ class TransactionData:
     def car_number(self, value):
         numbers = [number.strip() for number in value.split("/")]
         print(numbers)
-
-        if re.search(CAR_NUMBER_REGEX, numbers[0]) and numbers[0] in settings.AUTOS:
-            self._car_number = TransportNumberData(value=numbers[0], is_verified=True)
-        else:
-            self._car_number = TransportNumberData(value=numbers[0], is_verified=False)
-        
+        self._car_number = TransportNumberData(value=numbers[0], is_verified=True)
+        # if re.search(CAR_NUMBER_REGEX, numbers[0]) and numbers[0] in settings.AUTOS:
+        # if re.search(CAR_NUMBER_REGEX, numbers[0]):
+        #     self._car_number = TransportNumberData(value=numbers[0], is_verified=True)
+        # else:
+        #     self._car_number = TransportNumberData(value=numbers[0], is_verified=False)
         if len(numbers) > 1:
-            if re.search(TRAILERS_NUMBER_REGEX, numbers[1]) and numbers[1] in settings.TRAILERS:
+            # if re.search(TRAILERS_NUMBER_REGEX, numbers[1]) and numbers[1] in settings.TRAILERS:
+            if re.search(TRAILERS_NUMBER_REGEX, numbers[1]):
                 self._trailer_number = TransportNumberData(value=numbers[1], is_verified=True)
             else:
                 self._trailer_number = TransportNumberData(value=numbers[1], is_verified=False)
