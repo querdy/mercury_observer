@@ -18,11 +18,6 @@ VERIFIED_TRANSACTION_TYPE = "охлажденные"
 
 SCHEDULE_EVERY_TIME = 5
 
-AUTOS = ['А555АА111', ]
-
-TRAILERS = ['АА000011RUS', ]
-
-TRUCK = AUTOS + TRAILERS
 
 logger.remove()
 logger.add(sys.stdout, level='INFO')
